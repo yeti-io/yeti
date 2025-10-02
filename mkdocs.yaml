@@ -1,0 +1,41 @@
+site_name: Yeti project docs
+repo_url: https://github.com/yeti-io/yeti
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+
+  icon:
+    annotation: material/plus-circle
+  features:
+    - navigation.indexes
+    - navigation.instant
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+    - navigation.sections
+    - navigation.tabs
+    - toc.integrate
+
+plugins:
+  - search
+  - mermaid2
