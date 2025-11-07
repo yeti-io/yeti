@@ -1,0 +1,4 @@
+include:
+  - compose/kafka.yml
+  - compose/observability.yml
+  - compose/pipeline.yml

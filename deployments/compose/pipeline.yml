@@ -1,0 +1,274 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: filtering
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -h localhost" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    ports:
+      - "5432:5432"
+    networks:
+      - pipeline_network
+
+  mongodb:
+    image: mongo:6
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    ports:
+      - "27017:27017"
+    networks:
+      - pipeline_network
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "6379:6379"
+    networks:
+      - pipeline_network
+
+  migrations:
+    image: yeti-migrations:latest
+    restart: "no"
+    build:
+      context: ${PWD}
+      dockerfile: ${PWD}/deployments/migrations/Dockerfile
+    volumes:
+      - ${PWD}/migrations:/migrations
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DBNAME=filtering
+      - POSTGRES_SSLMODE=disable
+      - MONGODB_HOST=mongodb
+      - MONGODB_PORT=27017
+      - MONGODB_USER=admin
+      - MONGODB_PASSWORD=password
+      - MONGODB_DATABASE=enrichment
+      - MONGODB_AUTH_SOURCE=admin
+      - MIGRATIONS_PATH=/migrations
+      - POSTGRES_MIGRATIONS_PATH=/migrations/postgres
+      - MONGODB_MIGRATIONS_PATH=/migrations/mongodb
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    networks:
+      - pipeline_network
+
+  filtering-service:
+    image: yeti-filtering-service:latest
+    restart: always
+    build:
+      context: ${PWD}
+      dockerfile: ${PWD}/deployments/docker/Dockerfile
+      args:
+        SERVICE_NAME: filtering-service
+    command: [ "/app/runner", "serve", "--config", "/app/config.yaml" ]
+    volumes:
+      - ${PWD}/config/pipeline/filtering-service.yaml:/app/config.yaml
+    environment:
+      - SERVER_PORT=8081
+      - DATABASE_POSTGRES_HOST=postgres
+      - DATABASE_POSTGRES_PORT=5432
+      - DATABASE_POSTGRES_USER=admin
+      - DATABASE_POSTGRES_PASSWORD=password
+      - DATABASE_POSTGRES_DBNAME=filtering
+      - BROKER_TYPE=kafka
+      - BROKER_KAFKA_BROKERS=kafka:9092
+      - BROKER_KAFKA_GROUP_ID=filtering-service
+      - BROKER_KAFKA_INPUT_TOPIC=input_events
+      - BROKER_KAFKA_OUTPUT_TOPIC=filtered_events
+      - BROKER_KAFKA_CONFIG_UPDATE_TOPIC=config_updates
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8081/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - pipeline_network
+      - kafka_network
+
+  dedup_service:
+    image: yeti-dedup-service:latest
+    restart: always
+    build:
+      context: ${PWD}
+      dockerfile: ${PWD}/deployments/docker/Dockerfile
+      args:
+        SERVICE_NAME: dedup-service
+    command: [ "/app/runner", "serve", "--config", "/app/config.yaml" ]
+    volumes:
+      - ${PWD}/config/pipeline/dedup-service.yaml:/app/config.yaml
+    environment:
+      - SERVER_PORT=8082
+      - DATABASE_REDIS_HOST=redis
+      - DATABASE_REDIS_PORT=6379
+      - BROKER_TYPE=kafka
+      - BROKER_KAFKA_BROKERS=kafka:9092
+      - BROKER_KAFKA_GROUP_ID=dedup-service
+      - BROKER_KAFKA_INPUT_TOPIC=filtered_events
+      - BROKER_KAFKA_OUTPUT_TOPIC=deduplicated_events
+      - BROKER_KAFKA_CONFIG_UPDATE_TOPIC=config_updates
+    ports:
+      - "8082:8082"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8082/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - pipeline_network
+      - kafka_network
+
+  enrichment_service:
+    image: yeti-enrichment-service:latest
+    restart: always
+    build:
+      context: ${PWD}
+      dockerfile: ${PWD}/deployments/docker/Dockerfile
+      args:
+        SERVICE_NAME: enrichment-service
+    command: [ "/app/runner", "serve", "--config", "/app/config.yaml" ]
+    volumes:
+      - ${PWD}/config/pipeline/enrichment-service.yaml:/app/config.yaml
+    environment:
+      - SERVER_PORT=8083
+      - DATABASE_POSTGRES_HOST=postgres
+      - DATABASE_POSTGRES_PORT=5432
+      - DATABASE_POSTGRES_USER=admin
+      - DATABASE_POSTGRES_PASSWORD=password
+      - DATABASE_MONGODB_URI=mongodb://admin:password@mongodb:27017
+      - DATABASE_MONGODB_DATABASE=enrichment
+      - DATABASE_REDIS_HOST=redis
+      - DATABASE_REDIS_PORT=6379
+      - BROKER_TYPE=kafka
+      - BROKER_KAFKA_BROKERS=kafka:9092
+      - BROKER_KAFKA_GROUP_ID=enrichment-service
+      - BROKER_KAFKA_INPUT_TOPIC=deduplicated_events
+      - BROKER_KAFKA_OUTPUT_TOPIC=processed_events
+      - BROKER_KAFKA_CONFIG_UPDATE_TOPIC=config_updates
+    ports:
+      - "8083:8083"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8083/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - pipeline_network
+      - kafka_network
+
+  management_service:
+    image: yeti-management-service:latest
+    restart: always
+    build:
+      context: ${PWD}
+      dockerfile: ${PWD}/deployments/docker/Dockerfile
+      args:
+        SERVICE_NAME: management-service
+    command: [ "/app/runner", "serve", "--config", "/app/config.yaml" ]
+    volumes:
+      - ${PWD}/config/pipeline/management-service.yaml:/app/config.yaml
+    environment:
+      - SERVER_PORT=8084
+      - DATABASE_POSTGRES_HOST=postgres
+      - DATABASE_POSTGRES_PORT=5432
+      - DATABASE_POSTGRES_USER=admin
+      - DATABASE_POSTGRES_PASSWORD=password
+      - DATABASE_POSTGRES_DBNAME=filtering
+      - DATABASE_MONGODB_URI=mongodb://admin:password@mongodb:27017
+      - DATABASE_MONGODB_DATABASE=enrichment
+      - DATABASE_REDIS_HOST=redis
+      - DATABASE_REDIS_PORT=6379
+      - BROKER_TYPE=kafka
+      - BROKER_KAFKA_BROKERS=kafka:9092
+      - BROKER_KAFKA_CONFIG_UPDATE_TOPIC=config_updates
+    ports:
+      - "8084:8084"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8084/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - pipeline_network
+      - kafka_network
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+
+networks:
+  pipeline_network:
+    driver: bridge

@@ -1,0 +1,102 @@
+services:
+  loki:
+    image: grafana/loki:main-0edc65d
+    restart: always
+    command:
+      - --config.file=/etc/loki/local-config.yml
+    volumes:
+      - ${PWD}/config/loki.yml:/etc/loki/local-config.yml
+      - loki_data:/loki/data
+    ports:
+      - "3100:3100"
+    networks:
+      - grafana_network
+
+  tempo:
+    image: grafana/tempo:main-d1ec3c6
+    restart: always
+    command:
+      - --config.file=/etc/tempo-config.yml
+    volumes:
+      - ${PWD}/config/tempo.yml:/etc/tempo-config.yml
+      - tempo_data:/var/tempo
+    ports:
+      - "3200:3200"   # tempo
+      - "4318:4318"   # oltp grpc
+    networks:
+      - grafana_network
+      - pipeline_network
+
+  alloy:
+    image: grafana/alloy:v1.12.0
+    restart: always
+    user: root
+    volumes:
+      - ${PWD}/config/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/log/containers:/var/log/containers:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+      - /var/log/journal:/var/log/journal:ro
+      - /etc/hostname:/etc/hostname:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:9100
+      - /etc/alloy/config.alloy
+    ports:
+      - "9100:9100"
+    depends_on:
+      - loki
+      - prometheus
+    networks:
+      - grafana_network
+
+  prometheus:
+    image: prom/prometheus:v3.8.0
+    restart: always
+    volumes:
+      - ${PWD}/config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-lifecycle
+      - --web.enable-remote-write-receiver
+    ports:
+      - "9090:9090"
+    depends_on:
+      - jmx_exporter
+    networks:
+      - kafka_network
+      - grafana_network
+      - pipeline_network
+
+  grafana:
+    image: grafana/grafana:12.4.0-20151846001
+    restart: always
+    env_file:
+      - ${PWD}/config/grafana/grafana.env
+    volumes:
+      - ${PWD}/config/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ${PWD}/config/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ${PWD}/config/grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    networks:
+      - grafana_network
+
+volumes:
+  prometheus_data:
+  loki_data:
+  tempo_data:
+
+networks:
+  grafana_network:
+    driver: bridge
