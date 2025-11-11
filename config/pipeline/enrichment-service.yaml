@@ -1,0 +1,62 @@
+server:
+  port: 8080
+  read_timeout_seconds: 15
+  write_timeout_seconds: 15
+
+database:
+  redis:
+    host: "redis"
+    port: 6379
+    password: ""
+    db: 0
+    ttl_seconds: 3600
+
+  mongodb:
+    uri: "mongodb://admin:password@mongodb:27017"
+    database: "enrichment"
+
+  postgres:
+    host: "postgres"
+    port: 5432
+    user: "admin"
+    password: "password"
+    dbname: "filtering"
+    sslmode: "disable"
+
+broker:
+  type: "kafka"
+  kafka:
+    brokers: ["kafka:9092"]
+    group_id: "enrichment-service"
+    input_topic: "deduplicated_events"
+    output_topic: "processed_events"
+    config_update_topic: "config_updates"
+    dlq_topic: "system_dlq"
+    retry:
+      max_attempts: 3
+      initial_interval: 1s
+      max_interval: 30s
+      multiplier: 2.0
+      max_elapsed_time: 5m
+
+logging:
+  level: "info"
+  format: "json"
+
+circuit_breaker:
+  enabled: true
+  max_requests: 3
+  interval: 60s
+  timeout: 60s
+  failure_ratio: 0.5
+  min_requests: 3
+
+tracing:
+  enabled: true
+  service_name: "enrichment-service"
+  otlp:
+    endpoint: "tempo:4317"
+    insecure: true
+  sampler:
+    type: "always_on"
+    param: 1.0
