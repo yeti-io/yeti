@@ -1,0 +1,20 @@
+basePath: /api/v1
+host: localhost:8080
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+    url: http://www.example.com/support
+  description: REST API for managing filtering rules, enrichment rules, and deduplication
+    configuration
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Yeti Management Service API
+  version: "1.0"
+paths: {}
+schemes:
+- http
+- https
+swagger: "2.0"
