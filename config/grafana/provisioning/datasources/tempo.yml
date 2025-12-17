@@ -1,0 +1,15 @@
+apiVersion: 1
+
+datasources:
+  - name: Tempo
+    type: tempo
+    uid: tempo
+    url: http://tempo:3200
+    isDefault: false
+    tracing:
+      nodeGraph:
+        enabled: true
+      tracesToLogs:
+        datasourceUid: loki
+        tags: [ 'container' ]
+        mapTagNames: false
