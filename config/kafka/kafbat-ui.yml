@@ -1,0 +1,44 @@
+kafka:
+  clusters:
+    - name: local
+      bootstrap-servers: kafka:9092
+
+      metrics:
+        type: JMX
+        port: 7071
+        ssl: false
+
+      consumer-properties:
+        "max.partition.fetch.bytes": 1048576
+
+      producer-properties:
+        "enable.idempotence": false
+
+      polling-throttle-rate: 0
+
+  internalTopicPrefix: "__"
+
+  admin-client-timeout: 30000
+
+  polling:
+    poll-timeout-ms: 1000
+    max-page-size: 500
+    default-page-size: 100
+
+management:
+  endpoint:
+    info:
+      enabled: true
+    health:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "info,health,prometheus"
+
+logging:
+  level:
+    root: INFO
+    io.kafbat.ui: INFO
+    reactor.netty.http.server.AccessLog: INFO
+    org.hibernate.validator: INFO
