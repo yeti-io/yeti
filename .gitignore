@@ -2,7 +2,7 @@
 ### Example user template
 
 # IntelliJ project files
-.idea
+yeti2/yeti/.idea
 *.iml
 out
 gen

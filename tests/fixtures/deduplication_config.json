@@ -1,0 +1,30 @@
+[
+  {
+    "name": "default_md5_config",
+    "hash_algorithm": "md5",
+    "ttl_seconds": 3600,
+    "on_redis_error": "allow",
+    "fields_to_hash": ["id", "timestamp", "source"]
+  },
+  {
+    "name": "sha256_config",
+    "hash_algorithm": "sha256",
+    "ttl_seconds": 7200,
+    "on_redis_error": "deny",
+    "fields_to_hash": ["id", "source", "payload.user_id"]
+  },
+  {
+    "name": "short_ttl_config",
+    "hash_algorithm": "md5",
+    "ttl_seconds": 300,
+    "on_redis_error": "allow",
+    "fields_to_hash": ["id"]
+  },
+  {
+    "name": "extended_fields_config",
+    "hash_algorithm": "md5",
+    "ttl_seconds": 3600,
+    "on_redis_error": "allow",
+    "fields_to_hash": ["id", "timestamp", "source", "payload.user_id", "payload.order_id"]
+  }
+]

@@ -1,0 +1,173 @@
+[
+  {
+    "id": "msg-1",
+    "source": "test",
+    "payload": {
+      "status": "active",
+      "type": "event",
+      "value": 150
+    },
+    "metadata": {}
+  },
+  {
+    "id": "msg-2",
+    "source": "test",
+    "payload": {
+      "status": "inactive",
+      "type": "notification",
+      "value": 50
+    },
+    "metadata": {}
+  },
+  {
+    "id": "msg-3",
+    "source": "production",
+    "payload": {
+      "user_id": "user-123",
+      "order_id": "order-456",
+      "amount": 99.99
+    },
+    "metadata": {}
+  },
+  {
+    "id": "msg-4",
+    "source": "test",
+    "payload": {
+      "status": "active",
+      "priority": 10,
+      "category": "important"
+    },
+    "metadata": {}
+  },
+  {
+    "id": "msg-large-payload",
+    "source": "api-gateway",
+    "payload": {
+      "user_id": "user-789",
+      "event_type": "purchase",
+      "amount": 1999.99,
+      "currency": "USD",
+      "items": [
+        {"id": "item-1", "quantity": 2, "price": 99.99},
+        {"id": "item-2", "quantity": 1, "price": 50.00}
+      ],
+      "metadata": {
+        "campaign": "summer-sale",
+        "referrer": "google"
+      }
+    },
+    "metadata": {}
+  },
+  {
+    "id": "msg-nested-objects",
+    "source": "mobile-app",
+    "payload": {
+      "user": {
+        "id": "user-456",
+        "profile": {
+          "name": "John Doe",
+          "email": "john@example.com",
+          "preferences": {
+            "language": "en",
+            "timezone": "UTC"
+          }
+        }
+      },
+      "action": "view",
+      "timestamp": "2025-01-15T10:30:00Z"
+    },
+    "metadata": {}
+  },
+  {
+    "id": "msg-array-data",
+    "source": "analytics",
+    "payload": {
+      "session_id": "session-123",
+      "events": [
+        {"type": "page_view", "url": "/home", "duration": 5000},
+        {"type": "click", "element": "button-submit", "timestamp": "2025-01-15T10:31:00Z"},
+        {"type": "form_submit", "form_id": "contact-form", "fields_count": 5}
+      ],
+      "total_duration": 15000
+    },
+    "metadata": {}
+  },
+  {
+    "id": "msg-numeric-types",
+    "source": "metrics-collector",
+    "payload": {
+      "cpu_usage": 75.5,
+      "memory_mb": 2048,
+      "disk_io_ops": 1500,
+      "network_bytes": 1048576,
+      "active_connections": 42,
+      "is_healthy": true
+    },
+    "metadata": {}
+  },
+  {
+    "id": "msg-empty-fields",
+    "source": "test",
+    "payload": {
+      "id": "",
+      "status": null,
+      "tags": [],
+      "metadata": {}
+    },
+    "metadata": {}
+  },
+  {
+    "id": "msg-special-characters",
+    "source": "user-input",
+    "payload": {
+      "comment": "Hello \"world\" & <test> with 'quotes'",
+      "path": "/api/v1/users?id=123&filter=active",
+      "json_string": "{\"key\":\"value\"}",
+      "unicode": "Привет 世界 🌍"
+    },
+    "metadata": {}
+  },
+  {
+    "id": "msg-duplicate-candidate",
+    "source": "batch-processor",
+    "payload": {
+      "batch_id": "batch-001",
+      "record_id": "record-123",
+      "processed_at": "2025-01-15T10:00:00Z"
+    },
+    "metadata": {}
+  },
+  {
+    "id": "msg-duplicate-candidate-2",
+    "source": "batch-processor",
+    "payload": {
+      "batch_id": "batch-001",
+      "record_id": "record-123",
+      "processed_at": "2025-01-15T10:00:00Z"
+    },
+    "metadata": {}
+  },
+  {
+    "id": "msg-with-trace",
+    "source": "microservice-a",
+    "payload": {
+      "request_id": "req-789",
+      "service": "payment",
+      "action": "charge"
+    },
+    "metadata": {
+      "trace_id": "trace-abc-123",
+      "span_id": "span-xyz-456"
+    }
+  },
+  {
+    "id": "msg-filtered-out",
+    "source": "test",
+    "payload": {
+      "status": "deleted",
+      "type": "spam",
+      "value": -100
+    },
+    "metadata": {}
+  }
+]

@@ -1,0 +1,110 @@
+[
+  {
+    "name": "active_status_rule",
+    "expression": "payload.status == 'active'",
+    "priority": 10,
+    "enabled": true
+  },
+  {
+    "name": "event_type_rule",
+    "expression": "payload.type == 'event'",
+    "priority": 20,
+    "enabled": true
+  },
+  {
+    "name": "value_threshold_rule",
+    "expression": "payload.value > 100",
+    "priority": 5,
+    "enabled": false
+  },
+  {
+    "name": "complex_rule",
+    "expression": "payload.status == 'active' && payload.priority > 5",
+    "priority": 15,
+    "enabled": true
+  },
+  {
+    "name": "numeric_comparison_rule",
+    "expression": "payload.amount > 1000",
+    "priority": 25,
+    "enabled": true
+  },
+  {
+    "name": "string_contains_rule",
+    "expression": "'error' in payload.message.lower()",
+    "priority": 30,
+    "enabled": true
+  },
+  {
+    "name": "array_contains_rule",
+    "expression": "'item-1' in payload.items.map(x, x.id)",
+    "priority": 35,
+    "enabled": true
+  },
+  {
+    "name": "nested_field_rule",
+    "expression": "payload.user.profile.email.contains('@example.com')",
+    "priority": 40,
+    "enabled": true
+  },
+  {
+    "name": "multiple_conditions_rule",
+    "expression": "payload.status == 'active' && payload.priority >= 5 && payload.value <= 1000",
+    "priority": 45,
+    "enabled": true
+  },
+  {
+    "name": "or_condition_rule",
+    "expression": "payload.type == 'event' || payload.type == 'notification'",
+    "priority": 50,
+    "enabled": true
+  },
+  {
+    "name": "null_check_rule",
+    "expression": "has(payload.status) && payload.status != null",
+    "priority": 55,
+    "enabled": true
+  },
+  {
+    "name": "regex_match_rule",
+    "expression": "payload.email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$')",
+    "priority": 60,
+    "enabled": true
+  },
+  {
+    "name": "date_comparison_rule",
+    "expression": "timestamp(payload.created_at) > timestamp('2025-01-01T00:00:00Z')",
+    "priority": 65,
+    "enabled": true
+  },
+  {
+    "name": "array_length_rule",
+    "expression": "size(payload.items) > 0",
+    "priority": 70,
+    "enabled": true
+  },
+  {
+    "name": "disabled_high_priority_rule",
+    "expression": "payload.status == 'active'",
+    "priority": 1,
+    "enabled": false
+  },
+  {
+    "name": "low_priority_rule",
+    "expression": "true",
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "name": "complex_nested_rule",
+    "expression": "has(payload.user) && has(payload.user.profile) && payload.user.profile.preferences.language == 'en'",
+    "priority": 75,
+    "enabled": true
+  },
+  {
+    "name": "type_check_rule",
+    "expression": "type(payload.amount) == double && payload.amount > 0",
+    "priority": 80,
+    "enabled": true
+  }
+]

@@ -1,0 +1,146 @@
+[
+  {
+    "name": "user_enrichment_cache",
+    "field_to_enrich": "user_id",
+    "source_type": "cache",
+    "source_config": {
+      "key_pattern": "user:{value}",
+      "cache_type": "redis"
+    },
+    "transformations": [
+      {
+        "source_path": "name",
+        "target_field": "user_name",
+        "expression": "",
+        "default": null
+      },
+      {
+        "source_path": "email",
+        "target_field": "user_email",
+        "expression": "",
+        "default": null
+      }
+    ],
+    "cache_ttl_seconds": 3600,
+    "error_handling": "skip_rule",
+    "fallback_value": null,
+    "priority": 10,
+    "enabled": true
+  },
+  {
+    "name": "order_enrichment_cache",
+    "field_to_enrich": "order_id",
+    "source_type": "cache",
+    "source_config": {
+      "key_pattern": "order:{value}",
+      "cache_type": "redis"
+    },
+    "transformations": [
+      {
+        "source_path": "status",
+        "target_field": "order_status",
+        "expression": "",
+        "default": "pending"
+      },
+      {
+        "source_path": "total",
+        "target_field": "order_total",
+        "expression": "",
+        "default": 0
+      }
+    ],
+    "cache_ttl_seconds": 300,
+    "error_handling": "skip_rule",
+    "fallback_value": null,
+    "priority": 20,
+    "enabled": true
+  },
+  {
+    "name": "user_enrichment_mongodb",
+    "field_to_enrich": "user_id",
+    "source_type": "mongodb",
+    "source_config": {
+      "database": "test_db",
+      "collection": "user_profiles",
+      "query": {
+        "user_id": "{value}"
+      },
+      "field": "user_id"
+    },
+    "transformations": [
+      {
+        "source_path": "name",
+        "target_field": "user_name",
+        "expression": "",
+        "default": "Unknown User"
+      },
+      {
+        "source_path": "email",
+        "target_field": "user_email",
+        "expression": "",
+        "default": null
+      },
+      {
+        "source_path": "created_at",
+        "target_field": "user_created_at",
+        "expression": "",
+        "default": null
+      }
+    ],
+    "cache_ttl_seconds": 1800,
+    "error_handling": "skip_rule",
+    "fallback_value": null,
+    "priority": 15,
+    "enabled": true
+  },
+  {
+    "name": "product_enrichment_cache",
+    "field_to_enrich": "product_id",
+    "source_type": "cache",
+    "source_config": {
+      "key_pattern": "product:{value}",
+      "cache_type": "redis"
+    },
+    "transformations": [
+      {
+        "source_path": "name",
+        "target_field": "product_name",
+        "expression": "",
+        "default": "Unknown Product"
+      },
+      {
+        "source_path": "price",
+        "target_field": "product_price",
+        "expression": "",
+        "default": 0
+      }
+    ],
+    "cache_ttl_seconds": 600,
+    "error_handling": "skip_rule",
+    "fallback_value": null,
+    "priority": 25,
+    "enabled": true
+  },
+  {
+    "name": "disabled_enrichment_rule",
+    "field_to_enrich": "product_id",
+    "source_type": "cache",
+    "source_config": {
+      "key_pattern": "product:{value}",
+      "cache_type": "redis"
+    },
+    "transformations": [
+      {
+        "source_path": "name",
+        "target_field": "product_name",
+        "expression": "",
+        "default": null
+      }
+    ],
+    "cache_ttl_seconds": 300,
+    "error_handling": "skip_rule",
+    "fallback_value": null,
+    "priority": 50,
+    "enabled": false
+  }
+]

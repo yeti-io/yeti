@@ -1,0 +1,78 @@
+{
+  "filtering_results": {
+    "msg-1": {
+      "should_pass": true,
+      "expected_rules": ["active_status_rule"],
+      "reason": "Message has status='active' which matches active_status_rule"
+    },
+    "msg-2": {
+      "should_pass": false,
+      "expected_rules": [],
+      "reason": "Message has status='inactive' which doesn't match any enabled rules"
+    },
+    "msg-4": {
+      "should_pass": true,
+      "expected_rules": ["active_status_rule", "complex_rule"],
+      "reason": "Message has status='active' and priority=10 which matches both rules"
+    },
+    "msg-filtered-out": {
+      "should_pass": false,
+      "expected_rules": [],
+      "reason": "Message has status='deleted' and type='spam' which should be filtered"
+    }
+  },
+  "deduplication_results": {
+    "msg-duplicate-candidate": {
+      "is_unique": true,
+      "reason": "First occurrence of this message"
+    },
+    "msg-duplicate-candidate-2": {
+      "is_unique": false,
+      "reason": "Duplicate of msg-duplicate-candidate with same hash fields"
+    }
+  },
+  "enrichment_results": {
+    "msg-3": {
+      "should_enrich": true,
+      "expected_fields": ["user_name", "user_email"],
+      "reason": "Message has user_id field that matches enrichment rules"
+    },
+    "msg-large-payload": {
+      "should_enrich": true,
+      "expected_fields": ["user_name", "order_status"],
+      "reason": "Message has user_id and order_id fields for enrichment"
+    }
+  },
+  "pipeline_results": {
+    "msg-1": {
+      "stages": {
+        "filtering": {
+          "passed": true,
+          "rules_applied": ["active_status_rule"]
+        },
+        "deduplication": {
+          "is_unique": true
+        },
+        "enrichment": {
+          "enriched": false,
+          "reason": "No matching enrichment rules for this message"
+        }
+      }
+    },
+    "msg-3": {
+      "stages": {
+        "filtering": {
+          "passed": true,
+          "rules_applied": []
+        },
+        "deduplication": {
+          "is_unique": true
+        },
+        "enrichment": {
+          "enriched": true,
+          "fields_added": ["user_name", "user_email"]
+        }
+      }
+    }
+  }
+}
