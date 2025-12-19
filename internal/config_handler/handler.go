@@ -9,7 +9,7 @@ import (
 )
 
 type ConfigReloader interface {
-	ReloadRules(ctx context.Context, skipJitter ...bool) error
+	ReloadRules(ctx context.Context) error
 }
 
 type ConfigUpdater interface {
@@ -98,7 +98,7 @@ func (h *Handler) HandleConfigUpdateEvent(ctx context.Context, envelope models.M
 	)
 
 	if h.reloader != nil {
-		if err := h.reloader.ReloadRules(ctx, true); err != nil {
+		if err := h.reloader.ReloadRules(ctx); err != nil {
 			h.logger.Errorw("Failed to reload rules after config update", "error", err)
 			return err
 		}

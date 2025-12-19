@@ -5,9 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
+	pkgerrors "yeti/pkg/errors"
 )
 
 type Repository interface {
@@ -44,6 +47,14 @@ func (r *PostgresRepository) CreateFilteringRule(ctx context.Context, rule *Filt
 		rule.Priority, rule.Enabled, rule.CreatedAt, rule.UpdatedAt,
 	)
 	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code == "23505" {
+				return pkgerrors.ErrConflict.WithCause(err).WithDetail("message", fmt.Sprintf("rule with name '%s' already exists", rule.Name))
+			}
+		}
+		if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "unique constraint") {
+			return pkgerrors.ErrConflict.WithCause(err).WithDetail("message", fmt.Sprintf("rule with name '%s' already exists", rule.Name))
+		}
 		return fmt.Errorf("failed to create rule: %w", err)
 	}
 

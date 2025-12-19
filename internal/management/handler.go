@@ -85,6 +85,7 @@ func (h *Handler) ListRules(c *gin.Context) {
 // @Param        rule  body       CreateFilteringRuleRequest  true  "Filtering rule data"
 // @Success      201   {object}   FilteringRule
 // @Failure      400   {object}  errors.ErrorResponse
+// @Failure      409   {object}  errors.ErrorResponse
 // @Failure      500   {object}  errors.ErrorResponse
 // @Router       /rules/filtering [post]
 func (h *Handler) CreateRule(c *gin.Context) {
@@ -317,6 +318,7 @@ func (h *EnrichmentHandler) ListEnrichmentRules(c *gin.Context) {
 // @Param        rule  body       CreateEnrichmentRuleRequest  true  "Enrichment rule data"
 // @Success      201   {object}   EnrichmentRule
 // @Failure      400   {object}  errors.ErrorResponse
+// @Failure      409   {object}  errors.ErrorResponse
 // @Failure      500   {object}  errors.ErrorResponse
 // @Router       /rules/enrichment [post]
 func (h *EnrichmentHandler) CreateEnrichmentRule(c *gin.Context) {
@@ -328,6 +330,14 @@ func (h *EnrichmentHandler) CreateEnrichmentRule(c *gin.Context) {
 
 	rule, err := h.Service.CreateEnrichmentRule(c.Request.Context(), req)
 	if err != nil {
+		if errors.IsValidation(err) {
+			response := errors.ToErrorResponse(err)
+			if err.Error() != "" {
+				response["message"] = err.Error()
+			}
+			c.JSON(http.StatusBadRequest, response)
+			return
+		}
 		h.HandleError(c, err)
 		return
 	}

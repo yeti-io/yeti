@@ -50,7 +50,6 @@ func ValidateMessageEnvelope(msg *MessageEnvelope) error {
 	return nil
 }
 
-// GetPayloadField gets a field from payload
 func (msg *MessageEnvelope) GetPayloadField(name string) (interface{}, bool) {
 	if msg.Payload == nil {
 		return nil, false
@@ -60,7 +59,6 @@ func (msg *MessageEnvelope) GetPayloadField(name string) (interface{}, bool) {
 	return value, ok
 }
 
-// SetPayloadField sets a field in payload
 func (msg *MessageEnvelope) SetPayloadField(name string, value interface{}) {
 	if msg.Payload == nil {
 		msg.Payload = make(map[string]interface{})

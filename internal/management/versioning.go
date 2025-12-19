@@ -259,7 +259,7 @@ func (r *postgresVersioningRepository) GetNextVersion(ctx context.Context, ruleI
 	var version int
 	err := r.db.QueryRowContext(ctx, query, ruleID).Scan(&version)
 	if err != nil {
-		return 1, nil // First version
+		return 1, nil
 	}
 
 	return version, nil

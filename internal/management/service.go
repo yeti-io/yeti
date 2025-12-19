@@ -89,6 +89,9 @@ func (s *service) CreateFilteringRule(ctx context.Context, req CreateFilteringRu
 	}
 
 	if err := s.repo.CreateFilteringRule(ctx, rule); err != nil {
+		if pkgerrors.IsConflict(err) {
+			return nil, err
+		}
 		return nil, pkgerrors.Wrap(err, pkgerrors.ErrInternal)
 	}
 
@@ -206,7 +209,7 @@ func (s *service) GetAuditLogs(ctx context.Context, ruleID *string, ruleType str
 
 func (s *service) CreateEnrichmentRule(ctx context.Context, req CreateEnrichmentRuleRequest) (*EnrichmentRule, error) {
 	if err := ValidateEnrichmentRule(req); err != nil {
-		return nil, pkgerrors.Wrap(err, pkgerrors.ErrValidation)
+		return nil, pkgerrors.ErrValidation.WithCause(err).WithDetail("message", err.Error())
 	}
 
 	if s.enrichmentRepo == nil {
@@ -218,12 +221,17 @@ func (s *service) CreateEnrichmentRule(ctx context.Context, req CreateEnrichment
 		enabled = *req.Enabled
 	}
 
+	transformations := req.Transformations
+	if transformations == nil {
+		transformations = []EnrichmentTransformation{}
+	}
+
 	rule := &EnrichmentRule{
 		Name:            req.Name,
 		FieldToEnrich:   req.FieldToEnrich,
 		SourceType:      req.SourceType,
 		SourceConfig:    req.SourceConfig,
-		Transformations: req.Transformations,
+		Transformations: transformations,
 		CacheTTLSeconds: req.CacheTTLSeconds,
 		ErrorHandling:   req.ErrorHandling,
 		FallbackValue:   req.FallbackValue,
@@ -232,6 +240,9 @@ func (s *service) CreateEnrichmentRule(ctx context.Context, req CreateEnrichment
 	}
 
 	if err := s.enrichmentRepo.CreateEnrichmentRule(ctx, rule); err != nil {
+		if pkgerrors.IsConflict(err) {
+			return nil, err
+		}
 		return nil, pkgerrors.Wrap(err, pkgerrors.ErrInternal)
 	}
 
@@ -388,7 +399,6 @@ func (s *service) UpdateDeduplicationConfig(ctx context.Context, req UpdateDedup
 		}
 	}
 
-	// Update fields
 	if req.HashAlgorithm != nil {
 		s.dedupConfig.HashAlgorithm = *req.HashAlgorithm
 	}

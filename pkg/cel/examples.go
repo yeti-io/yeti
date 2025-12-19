@@ -15,7 +15,6 @@ var FilterExpressionExamples = map[string]string{
 	"complex_logic":        `(payload.status == "active" || payload.status == "pending") && payload.amount > 50.0`,
 }
 
-// TransformExpressionExamples provides example CEL expressions for transformations
 var TransformExpressionExamples = map[string]string{
 	"uppercase":            `sourceData.name.upperAscii()`,
 	"lowercase":            `sourceData.name.lowerAscii()`,

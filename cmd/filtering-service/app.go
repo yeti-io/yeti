@@ -144,28 +144,26 @@ func (a *App) Run(ctx context.Context) error {
 		})
 	}
 
-	if a.Config.Broker.Type == "kafka" && a.Config.Broker.Kafka.ConfigUpdateTopic != "" {
-		configConsumer, err := broker.NewConsumer(a.Config.Broker, a.Logger)
-		if err != nil {
-			configCtx := logging.WithServiceName(ctx, "filtering-service")
-			a.Logger.WarnwCtx(configCtx, "Failed to create config event consumer, event-driven reload disabled",
-				"error", err,
-			)
-		} else {
-			configConsumer.SetServiceName("filtering-service")
-			defer configConsumer.Close()
-			configEventHandler := filtering.NewHandler(a.service, a.Logger)
+	configConsumer, err := broker.NewConsumer(a.Config.Broker, a.Logger)
+	if err != nil {
+		configCtx := logging.WithServiceName(ctx, "filtering-service")
+		a.Logger.WarnwCtx(configCtx, "Failed to create config event consumer, event-driven reload disabled",
+			"error", err,
+		)
+	} else {
+		configConsumer.SetServiceName("filtering-service")
+		defer configConsumer.Close()
+		configEventHandler := filtering.NewHandler(a.service, a.Logger)
 
-			g.Go(func() error {
-				configCtx := logging.WithServiceName(gCtx, "filtering-service")
-				a.Logger.InfowCtx(configCtx, "Starting config update event consumer",
-					"topic", a.Config.Broker.Kafka.ConfigUpdateTopic,
-				)
-				return configConsumer.Consume(gCtx, a.Config.Broker.Kafka.ConfigUpdateTopic, func(cCtx context.Context, msg models.MessageEnvelope) error {
-					return configEventHandler.HandleConfigUpdateEvent(cCtx, msg)
-				})
+		g.Go(func() error {
+			configCtx := logging.WithServiceName(gCtx, "filtering-service")
+			a.Logger.InfowCtx(configCtx, "Starting config update event consumer",
+				"topic", a.Config.Broker.Kafka.ConfigUpdateTopic,
+			)
+			return configConsumer.Consume(gCtx, a.Config.Broker.Kafka.ConfigUpdateTopic, func(cCtx context.Context, msg models.MessageEnvelope) error {
+				return configEventHandler.HandleConfigUpdateEvent(cCtx, msg)
 			})
-		}
+		})
 	}
 
 	g.Go(func() error {
@@ -189,31 +187,32 @@ func (a *App) handleMessage(ctx context.Context, msg models.MessageEnvelope) err
 		return err
 	}
 
-	if passed {
-		if msg.Metadata.FiltersApplied == nil {
-			msg.Metadata.FiltersApplied = &models.FiltersApplied{}
-		}
-		msg.Metadata.FiltersApplied.PassedAt = time.Now()
-		msg.Metadata.FiltersApplied.RuleIDs = appliedRules
-
-		outputTopic := a.Config.Broker.Kafka.OutputTopic
-		if outputTopic == "" {
-			outputTopic = "dedup_events"
-		}
-
-		if err := a.Producer.Publish(ctx, outputTopic, msg); err != nil {
-			a.Logger.ErrorwCtx(ctx, "Failed to publish message",
-				"error", err,
-				"output_topic", outputTopic,
-			)
-			return err
-		}
-		a.Logger.InfowCtx(ctx, "Message passed filtering",
-			"rules_applied", len(appliedRules),
-		)
-	} else {
+	if !passed {
 		a.Logger.InfowCtx(ctx, "Message filtered out")
+		return nil
 	}
+
+	if msg.Metadata.FiltersApplied == nil {
+		msg.Metadata.FiltersApplied = &models.FiltersApplied{}
+	}
+	msg.Metadata.FiltersApplied.PassedAt = time.Now()
+	msg.Metadata.FiltersApplied.RuleIDs = appliedRules
+
+	outputTopic := a.Config.Broker.Kafka.OutputTopic
+	if outputTopic == "" {
+		outputTopic = "dedup_events"
+	}
+
+	if err := a.Producer.Publish(ctx, outputTopic, msg); err != nil {
+		a.Logger.ErrorwCtx(ctx, "Failed to publish message",
+			"error", err,
+			"output_topic", outputTopic,
+		)
+		return err
+	}
+	a.Logger.InfowCtx(ctx, "Message passed filtering",
+		"rules_applied", len(appliedRules),
+	)
 
 	return nil
 }

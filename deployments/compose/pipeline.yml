@@ -85,7 +85,7 @@ services:
     networks:
       - pipeline_network
 
-  filtering-service:
+  filtering_service:
     image: yeti-filtering-service:latest
     restart: always
     build:

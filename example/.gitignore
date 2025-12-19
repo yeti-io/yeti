@@ -1,0 +1,5 @@
+generated/
+.hypothesis
+__pycache__/
+*.pyc
+*.pyo

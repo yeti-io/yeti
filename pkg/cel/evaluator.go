@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/ext"
 
 	"yeti/pkg/models"
 )
@@ -20,6 +21,7 @@ func NewEvaluator() (*Evaluator, error) {
 		cel.Variable("timestamp", cel.TimestampType),
 		cel.Variable("payload", cel.MapType(cel.StringType, cel.DynType)),
 		cel.Variable("metadata", cel.MapType(cel.StringType, cel.DynType)),
+		ext.Strings(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CEL environment: %w", err)
@@ -32,6 +34,27 @@ func (e *Evaluator) ValidateExpression(expression string) error {
 	_, issues := e.env.Compile(expression)
 	if issues != nil && issues.Err() != nil {
 		return fmt.Errorf("CEL expression validation failed: %w", issues.Err())
+	}
+	return nil
+}
+
+func (e *Evaluator) ValidateTransformExpression(expression string) error {
+	env, err := cel.NewEnv(
+		cel.Variable("id", cel.StringType),
+		cel.Variable("source", cel.StringType),
+		cel.Variable("timestamp", cel.TimestampType),
+		cel.Variable("payload", cel.MapType(cel.StringType, cel.DynType)),
+		cel.Variable("metadata", cel.MapType(cel.StringType, cel.DynType)),
+		cel.Variable("sourceData", cel.MapType(cel.StringType, cel.DynType)),
+		ext.Strings(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create CEL environment: %w", err)
+	}
+
+	_, issues := env.Compile(expression)
+	if issues != nil && issues.Err() != nil {
+		return fmt.Errorf("CEL transform expression validation failed: %w", issues.Err())
 	}
 	return nil
 }
@@ -93,6 +116,7 @@ func (e *Evaluator) EvaluateTransform(ctx context.Context, expression string, ms
 		cel.Variable("payload", cel.MapType(cel.StringType, cel.DynType)),
 		cel.Variable("metadata", cel.MapType(cel.StringType, cel.DynType)),
 		cel.Variable("sourceData", cel.MapType(cel.StringType, cel.DynType)),
+		ext.Strings(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CEL environment: %w", err)

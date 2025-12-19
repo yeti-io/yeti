@@ -10,7 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// Status represents health status
 type Status string
 
 const (
@@ -134,7 +133,6 @@ type MongoDBChecker struct {
 	client *mongo.Client
 }
 
-// NewMongoDBChecker creates a new MongoDB health checker
 func NewMongoDBChecker(client *mongo.Client) *MongoDBChecker {
 	return &MongoDBChecker{client: client}
 }

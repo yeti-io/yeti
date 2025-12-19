@@ -3,12 +3,14 @@ package management
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	pkgerrors "yeti/pkg/errors"
 )
 
 type EnrichmentRepository interface {
@@ -39,6 +41,12 @@ func (r *mongoEnrichmentRepository) CreateEnrichmentRule(ctx context.Context, ru
 
 	_, err := r.collection.InsertOne(ctx, rule)
 	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return pkgerrors.ErrConflict.WithCause(err).WithDetail("message", fmt.Sprintf("enrichment rule with name '%s' already exists", rule.Name))
+		}
+		if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "E11000") {
+			return pkgerrors.ErrConflict.WithCause(err).WithDetail("message", fmt.Sprintf("enrichment rule with name '%s' already exists", rule.Name))
+		}
 		return fmt.Errorf("failed to create enrichment rule: %w", err)
 	}
 
@@ -51,7 +59,7 @@ func (r *mongoEnrichmentRepository) GetEnrichmentRule(ctx context.Context, id st
 	var rule EnrichmentRule
 	err := r.collection.FindOne(ctx, filter).Decode(&rule)
 	if err == mongo.ErrNoDocuments {
-		return nil, nil // Not found
+		return nil, nil
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get enrichment rule: %w", err)

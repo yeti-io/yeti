@@ -77,7 +77,6 @@ func (a *App) Initialize(ctx context.Context) error {
 func (a *App) initHTTPServer(ctx context.Context) error {
 	mux := http.NewServeMux()
 
-	// Health check endpoint
 	healthRegistry := health.NewCheckerRegistry()
 	if a.redis != nil {
 		healthRegistry.Register(health.NewRedisChecker(a.redis))
@@ -94,7 +93,6 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 		fmt.Fprintf(w, `{"status":"%s","timestamp":"%s"}`, h.Status, h.Timestamp.Format(time.RFC3339))
 	})
 
-	// Metrics endpoint
 	mux.Handle("/metrics", promhttp.Handler())
 
 	a.server = &http.Server{
@@ -134,7 +132,6 @@ func (a *App) initService() error {
 func (a *App) Run(ctx context.Context) error {
 	g, gCtx := errgroup.WithContext(ctx)
 
-	// Start HTTP server
 	if a.server != nil {
 		g.Go(func() error {
 			a.Logger.InfowCtx(ctx, "HTTP server starting", "port", a.Config.Server.Port)

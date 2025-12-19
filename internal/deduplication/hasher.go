@@ -8,26 +8,21 @@ import (
 	"strings"
 )
 
-// Hasher handles message hashing logic
 type Hasher struct {
 	algorithm string
 }
 
-// NewHasher creates a new hasher instance
 func NewHasher(algorithm string) *Hasher {
 	return &Hasher{algorithm: algorithm}
 }
 
-// ComputeHash computes the hash of the message based on specific fields
 func (h *Hasher) ComputeHash(msg map[string]interface{}, fields []string) (string, error) {
 	if len(fields) == 0 {
 		return "", fmt.Errorf("no fields specified for hashing")
 	}
 
-	// Create a deterministic string representation
 	var builder strings.Builder
 
-	// Iterate ordered by slice
 	for _, field := range fields {
 		val, exists := msg[field]
 		if !exists {
@@ -46,7 +41,6 @@ func (h *Hasher) ComputeHash(msg map[string]interface{}, fields []string) (strin
 		sum := md5.Sum([]byte(input))
 		return hex.EncodeToString(sum[:]), nil
 	default:
-		// Fallback to md5
 		sum := md5.Sum([]byte(input))
 		return hex.EncodeToString(sum[:]), nil
 	}

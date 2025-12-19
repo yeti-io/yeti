@@ -1,0 +1,20 @@
+[
+  {
+    "name": "high_value_orders",
+    "expression": "has(payload.amount) && payload.amount > 1000 && payload.currency == 'USD'",
+    "priority": 20,
+    "enabled": true
+  },
+  {
+    "name": "recent_events",
+    "expression": "timestamp(payload.created_at) > timestamp('2025-01-01T00:00:00Z')",
+    "priority": 15,
+    "enabled": true
+  },
+  {
+    "name": "active_high_value",
+    "expression": "payload.status == 'active'",
+    "priority": 10,
+    "enabled": true
+  }
+]

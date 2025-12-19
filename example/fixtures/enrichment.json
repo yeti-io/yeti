@@ -1,0 +1,253 @@
+[
+  {
+    "name": "user_enrichment_redis",
+    "field_to_enrich": "user_id",
+    "source_type": "redis",
+    "source_config": {
+      "key_pattern": "user:{value}",
+      "cache_type": "redis"
+    },
+    "transformations": [
+      {
+        "source_path": "name",
+        "target_field": "user_name",
+        "expression": "",
+        "default": "Unknown User"
+      },
+      {
+        "source_path": "email",
+        "target_field": "user_email",
+        "expression": "",
+        "default": null
+      },
+      {
+        "source_path": "tier",
+        "target_field": "user_tier",
+        "expression": "",
+        "default": "basic"
+      }
+    ],
+    "cache_ttl_seconds": 3600,
+    "error_handling": "skip_rule",
+    "priority": 10,
+    "enabled": true
+  },
+  {
+    "name": "product_enrichment_redis",
+    "field_to_enrich": "product_id",
+    "source_type": "redis",
+    "source_config": {
+      "key_pattern": "product:{value}",
+      "cache_type": "redis"
+    },
+    "transformations": [
+      {
+        "source_path": "name",
+        "target_field": "product_name",
+        "expression": "sourceData.name.upperAscii()",
+        "default": "Unknown Product"
+      },
+      {
+        "source_path": "price",
+        "target_field": "product_price",
+        "expression": "",
+        "default": 0
+      },
+      {
+        "source_path": "category",
+        "target_field": "product_category",
+        "expression": "",
+        "default": "general"
+      }
+    ],
+    "cache_ttl_seconds": 600,
+    "error_handling": "skip_field",
+    "priority": 15,
+    "enabled": true
+  },
+  {
+    "name": "user_enrichment_mongodb",
+    "field_to_enrich": "user_id",
+    "source_type": "mongodb",
+    "source_config": {
+      "database": "test_db",
+      "collection": "user_profiles",
+      "query": {
+        "_id": "{value}"
+      },
+      "field": "_id"
+    },
+    "transformations": [
+      {
+        "source_path": "name",
+        "target_field": "user_name_mongo",
+        "expression": "sourceData.name + ' (MongoDB)'",
+        "default": "Unknown User"
+      },
+      {
+        "source_path": "email",
+        "target_field": "user_email_mongo",
+        "expression": "sourceData.email.lowerAscii()",
+        "default": null
+      },
+      {
+        "source_path": "tier",
+        "target_field": "user_tier_mongo",
+        "expression": "sourceData.tier.upperAscii()",
+        "default": "BASIC"
+      },
+      {
+        "source_path": ".",
+        "target_field": "user_full_info",
+        "expression": "sourceData.name + ' (' + sourceData.tier + ') - ' + sourceData.email",
+        "default": ""
+      }
+    ],
+    "cache_ttl_seconds": 1800,
+    "error_handling": "skip_rule",
+    "priority": 5,
+    "enabled": true
+  },
+  {
+    "name": "product_enrichment_mongodb",
+    "field_to_enrich": "product_id",
+    "source_type": "mongodb",
+    "source_config": {
+      "database": "test_db",
+      "collection": "products",
+      "query": {
+        "_id": "{value}"
+      },
+      "field": "_id"
+    },
+    "transformations": [
+      {
+        "source_path": "name",
+        "target_field": "product_name_mongo",
+        "expression": "sourceData.name + ' [' + sourceData.category + ']'",
+        "default": "Unknown Product"
+      },
+      {
+        "source_path": "price",
+        "target_field": "product_price_mongo",
+        "expression": "double(sourceData.price)",
+        "default": 0
+      },
+      {
+        "source_path": "category",
+        "target_field": "product_category_mongo",
+        "expression": "sourceData.category.upperAscii()",
+        "default": "GENERAL"
+      },
+      {
+        "source_path": ".",
+        "target_field": "product_formatted_price",
+        "expression": "string(sourceData.price) + ' USD'",
+        "default": "0 USD"
+      },
+      {
+        "source_path": ".",
+        "target_field": "product_is_premium",
+        "expression": "sourceData.price > 500.0 ? true : false",
+        "default": false
+      }
+    ],
+    "cache_ttl_seconds": 1200,
+    "error_handling": "skip_field",
+    "priority": 8,
+    "enabled": true
+  },
+  {
+    "name": "order_advanced_enrichment_redis",
+    "field_to_enrich": "order_id",
+    "source_type": "redis",
+    "source_config": {
+      "key_pattern": "order:{value}",
+      "cache_type": "redis"
+    },
+    "transformations": [
+      {
+        "source_path": ".",
+        "target_field": "order_discount_percent",
+        "expression": "has(sourceData.discount_tier) && sourceData.discount_tier == 'premium' ? 15.0 : (has(sourceData.discount_tier) && sourceData.discount_tier == 'gold' ? 10.0 : 5.0)",
+        "default": 0
+      },
+      {
+        "source_path": ".",
+        "target_field": "order_discount_amount",
+        "expression": "payload.amount * (has(sourceData.discount_tier) && sourceData.discount_tier == 'premium' ? 0.15 : (has(sourceData.discount_tier) && sourceData.discount_tier == 'gold' ? 0.10 : 0.05))",
+        "default": 0
+      },
+      {
+        "source_path": ".",
+        "target_field": "order_total_with_discount",
+        "expression": "payload.amount - (payload.amount * (has(sourceData.discount_tier) && sourceData.discount_tier == 'premium' ? 0.15 : (has(sourceData.discount_tier) && sourceData.discount_tier == 'gold' ? 0.10 : 0.05)))",
+        "default": 0
+      },
+      {
+        "source_path": ".",
+        "target_field": "order_formatted_total",
+        "expression": "string(payload.amount - (payload.amount * (has(sourceData.discount_tier) && sourceData.discount_tier == 'premium' ? 0.15 : (has(sourceData.discount_tier) && sourceData.discount_tier == 'gold' ? 0.10 : 0.05)))) + ' ' + payload.currency",
+        "default": "0 USD"
+      },
+      {
+        "source_path": "shipping_method",
+        "target_field": "order_shipping_method",
+        "expression": "has(sourceData.shipping_method) ? sourceData.shipping_method.upperAscii() : 'STANDARD'",
+        "default": "STANDARD"
+      },
+      {
+        "source_path": ".",
+        "target_field": "order_shipping_cost",
+        "expression": "has(sourceData.shipping_cost) ? double(sourceData.shipping_cost) : (payload.amount > 1000.0 ? 0.0 : 10.0)",
+        "default": 10.0
+      },
+      {
+        "source_path": ".",
+        "target_field": "order_final_total",
+        "expression": "(payload.amount - (payload.amount * (has(sourceData.discount_tier) && sourceData.discount_tier == 'premium' ? 0.15 : (has(sourceData.discount_tier) && sourceData.discount_tier == 'gold' ? 0.10 : 0.05)))) + (has(sourceData.shipping_cost) ? double(sourceData.shipping_cost) : (payload.amount > 1000.0 ? 0.0 : 10.0))",
+        "default": 0
+      },
+      {
+        "source_path": ".",
+        "target_field": "order_status_label",
+        "expression": "payload.status == 'completed' ? 'PAID' : (payload.status == 'pending' ? 'AWAITING_PAYMENT' : (payload.status == 'processing' ? 'IN_PROGRESS' : 'UNKNOWN'))",
+        "default": "UNKNOWN"
+      },
+      {
+        "source_path": ".",
+        "target_field": "order_priority_score",
+        "expression": "(payload.amount > 1000.0 ? 10 : (payload.amount > 500.0 ? 5 : 1)) + (has(sourceData.discount_tier) && sourceData.discount_tier == 'premium' ? 5 : 0)",
+        "default": 1
+      },
+      {
+        "source_path": ".",
+        "target_field": "order_summary",
+        "expression": "payload.order_id + ' | ' + (has(sourceData.discount_tier) ? sourceData.discount_tier : 'standard') + ' | ' + string(payload.amount) + ' ' + payload.currency",
+        "default": ""
+      },
+      {
+        "source_path": "estimated_delivery_days",
+        "target_field": "order_estimated_delivery_days",
+        "expression": "has(sourceData.estimated_delivery_days) ? int(sourceData.estimated_delivery_days) : (has(sourceData.shipping_method) && sourceData.shipping_method == 'express' ? 1 : 5)",
+        "default": 5
+      },
+      {
+        "source_path": ".",
+        "target_field": "order_is_high_value",
+        "expression": "payload.amount > 1000.0 ? true : false",
+        "default": false
+      },
+      {
+        "source_path": ".",
+        "target_field": "order_has_free_shipping",
+        "expression": "payload.amount > 1000.0 || (has(sourceData.shipping_method) && sourceData.shipping_method == 'premium') ? true : false",
+        "default": false
+      }
+    ],
+    "cache_ttl_seconds": 1800,
+    "error_handling": "skip_field",
+    "priority": 5,
+    "enabled": true
+  }
+]

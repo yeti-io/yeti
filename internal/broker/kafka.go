@@ -42,7 +42,6 @@ func (p *KafkaProducer) Publish(ctx context.Context, topic string, msg models.Me
 		return fmt.Errorf("failed to marshal message: %w", err)
 	}
 
-	// Inject trace context into Kafka headers
 	headers := []kafka.Header{}
 	headers = tracing.InjectTraceContext(ctx, headers)
 
@@ -95,12 +94,12 @@ func (c *KafkaConsumer) SetServiceName(name string) {
 }
 
 func (c *KafkaConsumer) Consume(ctx context.Context, topic string, handler HandlerFunc) error {
-		c.logger.Infow("Creating Kafka reader",
-			"topic", topic,
-			"brokers", c.cfg.Brokers,
-			"group_id", c.cfg.GroupID,
-			"service_name", c.serviceName,
-		)
+	c.logger.Infow("Creating Kafka reader",
+		"topic", topic,
+		"brokers", c.cfg.Brokers,
+		"group_id", c.cfg.GroupID,
+		"service_name", c.serviceName,
+	)
 
 	c.reader = kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  c.cfg.Brokers,
@@ -147,11 +146,9 @@ func (c *KafkaConsumer) Consume(ctx context.Context, topic string, handler Handl
 				continue
 			}
 
-			// Extract trace context from Kafka headers and start span
 			msgCtx, span := tracing.StartSpanFromKafkaMessage(ctx, "kafka.consume", m.Headers)
 			defer span.End()
 
-			// Enrich context with trace_id and message_id from envelope
 			if envelope.Metadata.TraceID != "" {
 				msgCtx = logging.WithTraceID(msgCtx, envelope.Metadata.TraceID)
 			}

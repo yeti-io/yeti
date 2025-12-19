@@ -5,8 +5,6 @@ import (
 	"runtime/debug"
 )
 
-// RecoverPanic recovers from a panic and returns it as an error
-// It captures the stack trace for debugging
 func RecoverPanic(r interface{}) error {
 	if r == nil {
 		return nil
@@ -22,7 +20,6 @@ func RecoverPanic(r interface{}) error {
 		err = fmt.Errorf("panic: %v", v)
 	}
 
-	// Include stack trace in error details
 	stackTrace := string(debug.Stack())
 	return ErrInternal.
 		WithCause(err).
@@ -31,7 +28,6 @@ func RecoverPanic(r interface{}) error {
 		AsFatal() // Panics are always fatal
 }
 
-// RecoverPanicWithCallback recovers from a panic and calls a callback with the error
 func RecoverPanicWithCallback(r interface{}, callback func(error)) error {
 	err := RecoverPanic(r)
 	if err != nil && callback != nil {

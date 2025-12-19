@@ -46,7 +46,7 @@ var validSourceTypes = map[string]bool{
 	"mongodb":    true,
 	"postgresql": true,
 	"cache":      true,
-	"redis":      true, // Alias for cache
+	"redis":      true,
 }
 
 var validErrorHandling = map[string]bool{
@@ -95,7 +95,7 @@ func ValidateEnrichmentRule(req CreateEnrichmentRuleRequest) error {
 
 	for i, trans := range req.Transformations {
 		if trans.Expression != "" {
-			if err := evaluator.ValidateExpression(trans.Expression); err != nil {
+			if err := evaluator.ValidateTransformExpression(trans.Expression); err != nil {
 				return fmt.Errorf("invalid CEL expression in transformation[%d]: %w", i, err)
 			}
 		}

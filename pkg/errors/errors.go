@@ -33,7 +33,7 @@ type Error struct {
 	Status    int
 	Details   map[string]interface{}
 	Cause     error
-	retryable *bool // nil = not set, true = retryable, false = fatal
+	retryable *bool
 }
 
 func NewError(code, message string, status int) *Error {
@@ -187,49 +187,4 @@ func ToErrorResponse(err error) map[string]interface{} {
 	}
 
 	return response
-}
-
-func WrapWithContext(err error, context string) error {
-	if err == nil {
-		return nil
-	}
-	var appErr *Error
-	if errors.As(err, &appErr) {
-		return appErr.WithDetail("context", context)
-	}
-	return ErrInternal.WithCause(err).WithDetail("context", context)
-}
-
-func IsRetryable(err error) bool {
-	if err == nil {
-		return false
-	}
-	var retryableErr RetryableError
-	if errors.As(err, &retryableErr) {
-		return retryableErr.IsRetryable()
-	}
-	// Check if it's wrapped in our Error type
-	var appErr *Error
-	if errors.As(err, &appErr) {
-		return appErr.IsRetryable()
-	}
-	// Default: treat as retryable
-	return true
-}
-
-func IsFatal(err error) bool {
-	if err == nil {
-		return false
-	}
-	var fatalErr FatalError
-	if errors.As(err, &fatalErr) {
-		return fatalErr.IsFatal()
-	}
-	// Check if it's wrapped in our Error type
-	var appErr *Error
-	if errors.As(err, &appErr) {
-		return appErr.IsFatal()
-	}
-	// Default: not fatal
-	return false
 }

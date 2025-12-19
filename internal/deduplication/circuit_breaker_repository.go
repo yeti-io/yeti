@@ -10,16 +10,13 @@ import (
 	"yeti/pkg/circuitbreaker"
 )
 
-// CircuitBreakerRepository wraps a Repository with circuit breaker protection
 type CircuitBreakerRepository struct {
 	repo Repository
 	cb   *circuitbreaker.Wrapper
 }
 
-// NewCircuitBreakerRepository creates a new circuit breaker wrapper for a repository
 func NewCircuitBreakerRepository(repo Repository, cfg config.CircuitBreakerConfig) *CircuitBreakerRepository {
 	if !cfg.Enabled {
-		// If circuit breaker is disabled, return a passthrough wrapper
 		return &CircuitBreakerRepository{
 			repo: repo,
 			cb:   nil,
@@ -52,10 +49,8 @@ func NewCircuitBreakerRepository(repo Repository, cfg config.CircuitBreakerConfi
 	}
 }
 
-// SetNX sets a key if it doesn't exist with circuit breaker protection
 func (r *CircuitBreakerRepository) SetNX(ctx context.Context, key string, value interface{}, ttl time.Duration) (bool, error) {
 	if r.cb == nil {
-		// Circuit breaker disabled, pass through
 		return r.repo.SetNX(ctx, key, value, ttl)
 	}
 
@@ -63,11 +58,9 @@ func (r *CircuitBreakerRepository) SetNX(ctx context.Context, key string, value 
 		return r.repo.SetNX(ctx, key, value, ttl)
 	})
 
-	// Record metrics
 	r.cb.RecordRequest(err == nil)
 
 	if err != nil {
-		// Check if it's a circuit breaker error
 		if r.cb.IsOpen() {
 			return false, fmt.Errorf("circuit breaker is open for redis-dedup: %w", err)
 		}
@@ -82,7 +75,6 @@ func (r *CircuitBreakerRepository) SetNX(ctx context.Context, key string, value 
 	return success, nil
 }
 
-// State returns the current circuit breaker state
 func (r *CircuitBreakerRepository) State() string {
 	if r.cb == nil {
 		return "disabled"
@@ -90,7 +82,6 @@ func (r *CircuitBreakerRepository) State() string {
 	return r.cb.State().String()
 }
 
-// IsOpen returns true if the circuit breaker is open
 func (r *CircuitBreakerRepository) IsOpen() bool {
 	if r.cb == nil {
 		return false
@@ -98,7 +89,6 @@ func (r *CircuitBreakerRepository) IsOpen() bool {
 	return r.cb.IsOpen()
 }
 
-// GetCacheSize returns the approximate number of keys with the given prefix
 func (r *CircuitBreakerRepository) GetCacheSize(ctx context.Context, prefix string) (int, error) {
 	if r.cb == nil {
 		return r.repo.GetCacheSize(ctx, prefix)

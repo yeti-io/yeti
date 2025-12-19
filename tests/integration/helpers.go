@@ -25,8 +25,7 @@ func createTestFilteringConfig() config.FilteringConfig {
 			OnError: constants.FallbackAllow,
 		},
 		Reload: config.ReloadConfig{
-			IntervalSeconds:       60,
-			JitterMaxMilliseconds: 0,
+			IntervalSeconds: 60,
 		},
 	}
 }

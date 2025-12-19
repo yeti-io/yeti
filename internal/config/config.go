@@ -17,10 +17,7 @@ type Config struct {
 	Tracing        TracingConfig
 }
 
-type DynamicConfig struct {
-	// Rules and other dynamic configurations are loaded from database at runtime
-	// and updated via Kafka events or polling
-}
+type DynamicConfig struct{}
 
 type ServerConfig struct {
 	Port                int           `mapstructure:"port"`
@@ -32,7 +29,7 @@ type DatabaseConfig struct {
 	Postgres      PostgresConfig
 	Redis         RedisConfig
 	MongoDB       MongoDBConfig
-	RunMigrations bool `mapstructure:"run_migrations"` // Flag to enable/disable migrations
+	RunMigrations bool `mapstructure:"run_migrations"`
 }
 
 type PostgresConfig struct {
@@ -77,8 +74,8 @@ type KafkaConfig struct {
 	GroupID           string      `mapstructure:"group_id"`
 	InputTopic        string      `mapstructure:"input_topic"`
 	OutputTopic       string      `mapstructure:"output_topic"`
-	ConfigUpdateTopic string      `mapstructure:"config_update_topic"` // Topic for config/rules update events
-	DLQTopic          string      `mapstructure:"dlq_topic"`           // Dead Letter Queue topic
+	ConfigUpdateTopic string      `mapstructure:"config_update_topic"`
+	DLQTopic          string      `mapstructure:"dlq_topic"`
 	Retry             RetryConfig `mapstructure:"retry"`
 }
 
@@ -105,8 +102,7 @@ type FallbackConfig struct {
 }
 
 type ReloadConfig struct {
-	IntervalSeconds       int `mapstructure:"interval_seconds"`
-	JitterMaxMilliseconds int `mapstructure:"jitter_max_milliseconds"`
+	IntervalSeconds int `mapstructure:"interval_seconds"`
 }
 
 type DeduplicationConfig struct {
@@ -116,9 +112,7 @@ type DeduplicationConfig struct {
 	FieldsToHash  []string `mapstructure:"fields_to_hash"`
 }
 
-type EnrichmentConfig struct {
-	// Add specific enrichment configs here
-}
+type EnrichmentConfig struct{}
 
 type ManagementConfig struct {
 	RateLimit RateLimitConfig `mapstructure:"rate_limit"`

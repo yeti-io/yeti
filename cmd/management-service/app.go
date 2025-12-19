@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	_ "github.com/lib/pq" // PostgreSQL driver
+	_ "github.com/lib/pq"
 
 	"yeti/internal/broker"
 	"yeti/internal/config"
@@ -81,11 +81,9 @@ func (a *App) initDatabase(ctx context.Context) error {
 
 func (a *App) initMongoDB(ctx context.Context) error {
 	if a.config.Database.MongoDB.URI == "" {
-		return nil // MongoDB is optional
+		return nil
 	}
 
-	// MongoDB initialization will be done in initRouter where it's needed
-	// This is a placeholder for now
 	return nil
 }
 

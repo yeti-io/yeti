@@ -93,7 +93,6 @@ func (a *App) Initialize(ctx context.Context) error {
 func (a *App) initHTTPServer(ctx context.Context) error {
 	mux := http.NewServeMux()
 
-	// Health check endpoint
 	healthRegistry := health.NewCheckerRegistry()
 	if a.redis != nil {
 		healthRegistry.Register(health.NewRedisChecker(a.redis))

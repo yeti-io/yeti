@@ -1,0 +1,6 @@
+{
+  "hash_algorithm": "md5",
+  "ttl_seconds": 3600,
+  "on_redis_error": "allow",
+  "fields_to_hash": ["id", "timestamp", "source", "payload.user_id", "payload.order_id"]
+}
